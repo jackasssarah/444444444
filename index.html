@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kuromi</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      overflow: hidden;
+      padding: 20px;
+    }
+    .wrap {
+      width: min(92vw, 430px);
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 22px 18px 28px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+    }
+    .hero {
+      width: 100%;
+      max-width: 330px;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      border-radius: 18px;
+      display: block;
+      margin: 0 auto 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+    }
+    h1 {
+      margin: 4px 0 18px;
+      font-size: 27px;
+      line-height: 1.35;
+      color: #ffd2ec;
+      text-shadow: 0 2px 10px rgba(255, 120, 190, 0.22);
+    }
+    .result {
+      min-height: 38px;
+      margin: 8px 0 14px;
+      font-size: 30px;
+      font-weight: 800;
+      color: #ff9fd1;
+      letter-spacing: 1px;
+      text-shadow: 0 0 18px rgba(255, 120, 190, 0.28);
+    }
+    .btn-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      min-height: 72px;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform .2s ease, opacity .25s ease, font-size .2s ease, padding .2s ease;
+      -webkit-tap-highlight-color: transparent;
+      font-weight: 700;
+    }
+    #yesBtn {
+      background: linear-gradient(135deg, #ff7dc0, #ff5db1);
+      color: white;
+      font-size: 22px;
+      padding: 14px 34px;
+      box-shadow: 0 10px 24px rgba(255, 93, 177, 0.34);
+    }
+    #noBtn {
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+      font-size: 18px;
+      padding: 13px 24px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .heart {
+      position: fixed;
+      bottom: -30px;
+      font-size: 22px;
+      animation: floatUp linear forwards;
+      pointer-events: none;
+      user-select: none;
+      z-index: 3;
+      filter: drop-shadow(0 4px 10px rgba(255, 105, 180, 0.22));
+    }
+    @keyframes floatUp {
+      0% {
+        transform: translate3d(0, 0, 0) scale(0.8) rotate(0deg);
+        opacity: 0;
+      }
+      10% { opacity: 1; }
+      100% {
+        transform: translate3d(var(--driftX), calc(-1 * var(--rise)), 0) scale(var(--scaleEnd)) rotate(var(--rotate));
+        opacity: 0;
+      }
+    }
+    .burst {
+      animation: pop .45s ease;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.98); }
+      45% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="card">
+      <img id="kuromiImg" class="hero" src="kuromi_crop.png" alt="Kuromi" />
+      <h1 id="title">听说你想做我男朋友</h1>
+      <div class="result" id="result"></div>
+      <div class="btn-row" id="btnRow">
+        <button id="yesBtn">是</button>
+        <button id="noBtn">不是</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn = document.getElementById('noBtn');
+    const title = document.getElementById('title');
+    const result = document.getElementById('result');
+    const img = document.getElementById('kuromiImg');
+    const card = document.getElementById('card');
+
+    const noTexts = [
+      '不是',
+      '？你想好了吗',
+      '你再考虑下',
+      '不许选这个',
+      '这个不可以',
+      '再给你一次机会',
+      '你确定嘛',
+      '真的不要嘛',
+      '最后问一次',
+      '只能选“是”了'
+    ];
+
+    let noClickCount = 0;
+
+    function updateImageByStage() {
+      if (noClickCount <= 0) {
+        img.src = 'kuromi_crop.png';
+      } else if (noClickCount <= 2) {
+        img.src = 'kuromi_pout.jpeg';
+      } else {
+        img.src = 'kuromi_cry.jpeg';
+      }
+      img.classList.remove('burst');
+      void img.offsetWidth;
+      img.classList.add('burst');
+    }
+
+    function popHearts(count = 40, extra = false) {
+      for (let i = 0; i < count; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'heart';
+        heart.textContent = Math.random() > 0.18 ? '💗' : '💖';
+        heart.style.left = (Math.random() * 96 + 2) + 'vw';
+        const duration = (Math.random() * 1.7 + (extra ? 2.0 : 2.5)).toFixed(2) + 's';
+        const size = Math.floor(Math.random() * 20 + (extra ? 20 : 16));
+        const drift = (Math.random() * 220 - 110).toFixed(0) + 'px';
+        const rise = (Math.random() * 260 + 560).toFixed(0) + 'px';
+        const scaleEnd = (Math.random() * 1.4 + 0.9).toFixed(2);
+        const rotate = (Math.random() * 240 - 120).toFixed(0) + 'deg';
+        heart.style.animationDuration = duration;
+        heart.style.fontSize = size + 'px';
+        heart.style.setProperty('--driftX', drift);
+        heart.style.setProperty('--rise', rise);
+        heart.style.setProperty('--scaleEnd', scaleEnd);
+        heart.style.setProperty('--rotate', rotate);
+        document.body.appendChild(heart);
+        setTimeout(() => heart.remove(), 4600);
+      }
+    }
+
+    noBtn.addEventListener('click', () => {
+      noClickCount += 1;
+      updateImageByStage();
+
+      const textIndex = Math.min(noClickCount, noTexts.length - 1);
+      noBtn.textContent = noTexts[textIndex];
+
+      const yesFont = Math.min(22 + noClickCount * 3, 38);
+      const yesPadY = Math.min(14 + noClickCount * 1.3, 22);
+      const yesPadX = Math.min(34 + noClickCount * 5, 58);
+      yesBtn.style.fontSize = `${yesFont}px`;
+      yesBtn.style.padding = `${yesPadY}px ${yesPadX}px`;
+
+      const noFont = Math.max(18 - noClickCount * 1.3, 11);
+      const noPadY = Math.max(13 - noClickCount * 0.9, 6);
+      const noPadX = Math.max(24 - noClickCount * 1.5, 8);
+      noBtn.style.fontSize = `${noFont}px`;
+      noBtn.style.padding = `${noPadY}px ${noPadX}px`;
+
+      if (noClickCount >= 8) {
+        noBtn.style.opacity = '0';
+        noBtn.style.transform = 'scale(0.2)';
+        noBtn.style.pointerEvents = 'none';
+      }
+    });
+
+    yesBtn.addEventListener('click', () => {
+      img.src = 'kuromi_kiss.jpeg';
+      img.classList.remove('burst');
+      void img.offsetWidth;
+      img.classList.add('burst');
+
+      title.textContent = '听说你想做我男朋友';
+      result.textContent = '哈哈哈哈哈哈哈';
+      yesBtn.textContent = '好呀';
+      yesBtn.style.fontSize = '28px';
+      yesBtn.style.padding = '16px 38px';
+      yesBtn.style.transform = 'scale(1.02)';
+      noBtn.style.display = 'none';
+
+      popHearts(60, true);
+      setTimeout(() => popHearts(45, true), 180);
+      setTimeout(() => popHearts(34, true), 420);
+      setTimeout(() => popHearts(24, true), 760);
+    });
+
+    updateImageByStage();
+  </script>
+</body>
+</html>
